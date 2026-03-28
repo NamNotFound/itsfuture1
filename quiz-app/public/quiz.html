@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Luminous Quiz — Làm bài</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config={darkMode:"class",theme:{extend:{colors:{
+    "surface-container-low":"#131313","error-dim":"#d73357","secondary":"#c08cf7",
+    "surface-container-highest":"#262626","surface-dim":"#0e0e0e","surface":"#0e0e0e",
+    "primary":"#ba9eff","surface-bright":"#2c2c2c","on-primary":"#39008c",
+    "outline-variant":"#484847","surface-container-high":"#20201f","surface-container":"#1a1a1a",
+    "tertiary":"#ff97b5","surface-container-lowest":"#000000","outline":"#767575",
+    "primary-dim":"#8455ef","on-surface":"#ffffff","on-surface-variant":"#adaaaa",
+    "error":"#ff6e84","primary-container":"#ae8dff",
+  },fontFamily:{"headline":["Manrope"],"body":["Inter"],"label":["Inter"]},
+  borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"}}}}
+</script>
+<style>
+  body{background-color:#0e0e0e;color:#fff;-webkit-font-smoothing:antialiased;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass-card{background:rgba(44,44,44,0.4);backdrop-filter:blur(20px);border:1px solid rgba(72,72,71,0.15);}
+  .option-btn{display:flex;align-items:center;padding:1.25rem 1.5rem;border-radius:.75rem;background:#1a1a1a;border:1px solid rgba(72,72,71,0.15);cursor:pointer;transition:all .2s ease;text-align:left;width:100%;gap:1rem;}
+  .option-btn:hover:not(.disabled){background:rgba(44,44,44,0.4);border-color:rgba(186,158,255,0.5);transform:translateX(2px);}
+  .option-btn.selected{background:rgba(186,158,255,0.1);border:2px solid #ba9eff;box-shadow:0 0 25px rgba(186,158,255,0.15);}
+  .option-btn.correct{background:rgba(67,233,123,0.08)!important;border:2px solid rgba(67,233,123,0.5)!important;}
+  .option-btn.wrong{background:rgba(215,51,87,0.08)!important;border:2px solid rgba(215,51,87,0.4)!important;}
+  .option-btn.disabled{cursor:not-allowed;}
+  .badge{width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;border-radius:.625rem;background:#262626;border:1px solid rgba(72,72,71,0.2);font-family:'Manrope',sans-serif;font-weight:800;font-size:.9rem;color:#adaaaa;flex-shrink:0;transition:all .2s;}
+  .option-btn.selected .badge{background:#ba9eff;color:#39008c;border-color:#ba9eff;}
+  .option-btn.correct .badge{background:rgba(67,233,123,0.2);color:#43e97b;border-color:rgba(67,233,123,0.5);}
+  .option-btn.wrong .badge{background:rgba(215,51,87,0.2);color:#ff6e84;border-color:rgba(215,51,87,0.5);}
+  .toast-container{position:fixed;top:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:12px;}
+  .toast{padding:12px 18px;border-radius:10px;font-size:.875rem;font-weight:500;min-width:220px;animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
+  .toast.success{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.25);color:#43e97b;}
+  .toast.error{background:rgba(215,51,87,.12);border:1px solid rgba(215,51,87,.3);color:#ff6e84;}
+  .toast.info{background:rgba(186,158,255,.1);border:1px solid rgba(186,158,255,.2);color:#ba9eff;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(14,14,14,.85);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+  .loading-overlay.show{display:flex;}
+  .spinner{width:40px;height:40px;border:3px solid #262626;border-top-color:#ba9eff;border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .slide-in{animation:slideIn .35s ease both;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body class="font-body min-h-screen">
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="text-on-surface-variant text-sm">Đang tải câu hỏi...</p>
+</div>
+
+<nav class="fixed top-0 w-full z-50 bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-[#484847]/15 flex justify-between items-center px-6 md:px-8 py-4">
+  <span class="text-xl font-bold bg-gradient-to-br from-[#ba9eff] to-[#8455ef] bg-clip-text text-transparent font-headline tracking-tight">Luminous Quiz</span>
+  <a href="/leaderboard" class="text-[#adaaaa] hover:text-white transition-colors font-headline text-sm flex items-center gap-1">
+    <span class="material-symbols-outlined text-base">leaderboard</span> Xếp hạng
+  </a>
+</nav>
+
+<main class="pt-24 pb-12 px-4 md:px-6 max-w-7xl mx-auto flex flex-col gap-8">
+  <!-- Progress & Timer -->
+  <section class="flex flex-col md:flex-row justify-between items-end gap-5 border-b border-outline-variant/10 pb-7">
+    <div class="w-full md:w-1/2">
+      <div class="flex justify-between mb-3 items-baseline">
+        <span class="font-headline font-extrabold text-3xl md:text-4xl tracking-tighter uppercase" id="questionNum">Câu 01<span class="text-on-surface-variant/40">/20</span></span>
+        <span class="text-secondary font-label text-xs tracking-widest uppercase font-bold" id="scoreText">Đúng: 0</span>
+      </div>
+      <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-primary to-primary-dim shadow-[0_0_15px_rgba(186,158,255,0.4)] transition-all duration-500" id="progressBar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="glass-card px-6 py-3 rounded-xl flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary">timer</span>
+      <div class="flex flex-col">
+        <span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Thời gian</span>
+        <span class="font-headline font-bold text-2xl tabular-nums" id="timer">05:00</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quiz Body -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start" id="questionCard">
+    <div class="lg:col-span-7 flex flex-col gap-6">
+      <div class="space-y-4">
+        <span class="inline-block px-3 py-1 rounded bg-secondary/10 border border-secondary/20 text-secondary text-[10px] uppercase tracking-widest font-bold" id="categoryTag">HTML</span>
+        <h1 class="font-headline text-2xl md:text-4xl leading-[1.2] font-bold tracking-tight" id="questionText">Đang tải...</h1>
+      </div>
+    </div>
+    <div class="lg:col-span-5 flex flex-col gap-3" id="optionsContainer"></div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="flex items-center justify-between pt-6 border-t border-outline-variant/10">
+    <span class="text-on-surface-variant text-xs font-label uppercase tracking-widest">
+      Đã trả lời: <span class="text-primary font-bold" id="answeredCount">0</span>
+    </span>
+    <button id="nextBtn" onclick="nextQuestion()" disabled
+      class="flex items-center gap-2 px-7 py-4 bg-gradient-to-br from-primary to-primary-dim text-on-primary font-headline font-bold rounded-xl shadow-[0_10px_20px_-5px_rgba(132,85,239,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(132,85,239,0.5)] transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+      Tiếp theo <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+  </div>
+</main>
+
+<div class="fixed top-0 -left-64 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-0 -right-64 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+
+<script>
+  let questions=[],current=0,answers={},correctCount=0,answered=0,timerInterval,timeLeft=300;
+  const LABELS=['A','B','C','D'];
+
+  function showToast(msg,type='info',dur=3000){
+    const c=document.getElementById('toastContainer');
+    const icons={success:'✅',error:'❌',info:'ℹ️'};
+    const t=document.createElement('div');t.className=`toast ${type}`;
+    t.innerHTML=`<span>${icons[type]}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(()=>{t.style.animation='toastIn .3s ease reverse';setTimeout(()=>t.remove(),300);},dur);
+  }
+  function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('show',v);}
+
+  function getCategory(idx){
+    if(idx<6)return{label:'HTML',cls:'bg-orange-500/10 border-orange-500/20 text-orange-400'};
+    if(idx<12)return{label:'CSS',cls:'bg-blue-500/10 border-blue-500/20 text-blue-400'};
+    return{label:'JavaScript',cls:'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'};
+  }
+
+  async function loadQuestions(){
+    showLoading(true);
+    try{
+      const res=await fetch('/questions');
+      questions=await res.json();
+      if(!questions.length){showToast('Không có câu hỏi!','error');return;}
+      renderQuestion();startTimer();
+    }catch(e){showToast('Lỗi tải câu hỏi','error');}
+    finally{showLoading(false);}
+  }
+
+  function startTimer(){
+    const el=document.getElementById('timer');
+    timerInterval=setInterval(()=>{
+      timeLeft--;
+      const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
+      const s=String(timeLeft%60).padStart(2,'0');
+      el.textContent=`${m}:${s}`;
+      if(timeLeft<=60)el.style.color='#ff6e84';
+      else if(timeLeft<=120)el.style.color='#ffcc00';
+      if(timeLeft<=0){clearInterval(timerInterval);showToast('⏰ Hết giờ!','error');setTimeout(finishQuiz,800);}
+    },1000);
+  }
+
+  function renderQuestion(){
+    const q=questions[current];
+    const card=document.getElementById('questionCard');
+    card.classList.remove('slide-in');void card.offsetWidth;card.classList.add('slide-in');
+    const cat=getCategory(current);
+    const tag=document.getElementById('categoryTag');
+    tag.textContent=cat.label;tag.className=`inline-block px-3 py-1 rounded border text-[10px] uppercase tracking-widest font-bold ${cat.cls}`;
+    document.getElementById('questionNum').innerHTML=`Câu ${String(current+1).padStart(2,'0')}<span class="text-on-surface-variant/40">/${questions.length}</span>`;
+    document.getElementById('questionText').textContent=q.question;
+    document.getElementById('progressBar').style.width=`${(current/questions.length)*100}%`;
+
+    const container=document.getElementById('optionsContainer');
+    container.innerHTML='';
+    q.options.forEach((opt,i)=>{
+      const btn=document.createElement('button');
+      btn.className='option-btn';
+      btn.innerHTML=`<div class="badge">${LABELS[i]}</div><span class="font-body text-base text-on-surface-variant flex-1">${opt}</span><span class="result-icon text-lg opacity-0 transition-opacity"></span>`;
+      btn.addEventListener('click',()=>selectAnswer(i));
+      container.appendChild(btn);
+    });
+    document.getElementById('nextBtn').disabled=true;
+    if(answers[q._id]!==undefined){
+      document.querySelectorAll('.option-btn')[answers[q._id]].classList.add('selected','disabled');
+      document.getElementById('nextBtn').disabled=false;
+    }
+  }
+
+  async function selectAnswer(idx){
+    const q=questions[current];
+    if(document.querySelector('.option-btn.correct,.option-btn.wrong'))return;
+    answers[q._id]=idx;
+    const opts=document.querySelectorAll('.option-btn');
+    opts.forEach(o=>o.classList.add('disabled'));
+    opts[idx].classList.add('selected');
+    try{
+      const res=await fetch('/check-answers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:{[q._id]:idx}})});
+      const data=await res.json();
+      const result=data.results[0];
+      if(result.isCorrect){
+        opts[idx].classList.add('correct');
+        opts[idx].querySelector('.result-icon').textContent='✓';
+        opts[idx].querySelector('.result-icon').style.opacity='1';
+        correctCount++;showToast('Chính xác! 🎉','success',1500);
+      }else{
+        opts[idx].classList.add('wrong');
+        opts[idx].querySelector('.result-icon').textContent='✗';
+        opts[idx].querySelector('.result-icon').style.opacity='1';
+        opts[result.correct].classList.add('correct');
+        opts[result.correct].querySelector('.result-icon').textContent='✓';
+        opts[result.correct].querySelector('.result-icon').style.opacity='1';
+        showToast('Sai! Đáp án đúng là '+LABELS[result.correct],'error',2000);
+      }
+      answered++;
+      document.getElementById('answeredCount').textContent=answered;
+      document.getElementById('scoreText').textContent='Đúng: '+correctCount;
+      document.getElementById('nextBtn').disabled=false;
+    }catch(e){}
+  }
+
+  function nextQuestion(){
+    if(current>=questions.length-1){finishQuiz();return;}
+    current++;
+    if(current===questions.length-1)document.getElementById('nextBtn').innerHTML='Nộp bài <span class="material-symbols-outlined">done_all</span>';
+    renderQuestion();
+  }
+
+  function finishQuiz(){
+    clearInterval(timerInterval);
+    localStorage.setItem('quizScore',correctCount);
+    localStorage.setItem('quizTotal',questions.length);
+    showToast('Đang tính điểm...','info');
+    setTimeout(()=>window.location.href='/result',800);
+  }
+
+  const name=localStorage.getItem('quizUserName');
+  if(!name)window.location.href='/';
+  else loadQuestions();
+</script>
+</body>
+</html>

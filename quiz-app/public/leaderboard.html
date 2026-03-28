@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Luminous Quiz — Leaderboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config={darkMode:"class",theme:{extend:{colors:{
+    "surface-container-low":"#131313","secondary":"#c08cf7","surface-container-highest":"#262626",
+    "surface":"#0e0e0e","primary":"#ba9eff","on-primary":"#39008c","outline-variant":"#484847",
+    "surface-container-high":"#20201f","surface-container":"#1a1a1a","tertiary":"#ff97b5",
+    "primary-dim":"#8455ef","on-surface":"#ffffff","on-surface-variant":"#adaaaa","error":"#ff6e84",
+  },fontFamily:{"headline":["Manrope"],"body":["Inter"],"label":["Inter"]},
+  borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"}}}}
+</script>
+<style>
+  body{background-color:#0e0e0e;color:#fff;-webkit-font-smoothing:antialiased;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass-panel{background:rgba(44,44,44,0.6);backdrop-filter:blur(20px);}
+  .medal-glow-gold{box-shadow:0 0 30px rgba(255,215,0,0.15);}
+  .medal-glow-silver{box-shadow:0 0 30px rgba(192,192,192,0.1);}
+  .medal-glow-bronze{box-shadow:0 0 30px rgba(205,127,50,0.1);}
+  .toast-container{position:fixed;top:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:12px;}
+  .toast{padding:12px 18px;border-radius:10px;font-size:.875rem;font-weight:500;min-width:220px;animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
+  .toast.success{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.25);color:#43e97b;}
+  .toast.error{background:rgba(215,51,87,.12);border:1px solid rgba(215,51,87,.3);color:#ff6e84;}
+  .toast.info{background:rgba(186,158,255,.1);border:1px solid rgba(186,158,255,.2);color:#ba9eff;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(14,14,14,.85);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+  .loading-overlay.show{display:flex;}
+  .spinner{width:40px;height:40px;border:3px solid #262626;border-top-color:#ba9eff;border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lb-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-radius:.75rem;background:#1a1a1a;border:1px solid rgba(72,72,71,0.15);transition:all .2s;animation:fadeUp .4s ease both;}
+  .lb-row:hover{border-color:rgba(186,158,255,0.3);transform:translateX(4px);}
+  .lb-row.rank-1{background:rgba(255,215,0,0.05);border-color:rgba(255,215,0,0.2);}
+  .lb-row.rank-2{background:rgba(192,192,192,0.05);border-color:rgba(192,192,192,0.15);}
+  .lb-row.rank-3{background:rgba(205,127,50,0.06);border-color:rgba(205,127,50,0.15);}
+  .lb-row.is-me{border-color:rgba(186,158,255,0.5)!important;background:rgba(186,158,255,0.06)!important;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body class="font-body min-h-screen">
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="text-on-surface-variant text-sm">Đang tải...</p>
+</div>
+
+<nav class="fixed top-0 w-full z-50 bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-[#484847]/15 flex justify-between items-center px-6 md:px-8 py-4">
+  <span class="text-xl font-bold bg-gradient-to-br from-[#ba9eff] to-[#8455ef] bg-clip-text text-transparent font-headline tracking-tight">Luminous Quiz</span>
+  <div class="flex gap-4 items-center">
+    <a class="text-[#adaaaa] hover:text-white transition-colors font-headline text-sm" href="/">Quiz</a>
+    <a class="text-[#ba9eff] font-bold font-headline text-sm border-b-2 border-[#ba9eff] pb-0.5" href="/leaderboard">Leaderboard</a>
+  </div>
+</nav>
+
+<main class="pt-24 pb-20 px-4 md:px-8 max-w-5xl mx-auto">
+  <header class="mb-14 text-center">
+    <p class="font-label uppercase tracking-widest text-primary mb-3 text-xs font-semibold">Elite Performance</p>
+    <h1 class="font-headline text-4xl md:text-6xl font-extrabold tracking-tighter mb-4">The Hall of Fame</h1>
+    <p class="text-on-surface-variant max-w-xl mx-auto text-sm md:text-base">Những người chơi xuất sắc nhất trong bảng xếp hạng Luminous Quiz.</p>
+  </header>
+
+  <!-- Podium top 3 -->
+  <div id="podiumSection" class="hidden grid-cols-3 gap-6 items-end mb-16 max-w-2xl mx-auto">
+    <!-- Silver -->
+    <div class="flex flex-col items-center" id="podium2">
+      <div class="relative mb-4">
+        <div class="w-20 h-20 rounded-full border-4 border-slate-400/30 bg-surface-container-highest flex items-center justify-center medal-glow-silver">
+          <span class="text-2xl font-bold font-headline text-slate-400" id="pod2name">—</span>
+        </div>
+        <div class="absolute -bottom-2 -right-2 bg-slate-400 text-black w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">2</div>
+      </div>
+      <p class="text-sm font-bold font-headline text-center" id="pod2name2">—</p>
+      <p class="text-secondary text-xs font-semibold" id="pod2score">—</p>
+    </div>
+    <!-- Gold -->
+    <div class="flex flex-col items-center mb-6">
+      <span class="material-symbols-outlined text-yellow-400 text-4xl mb-1" style="font-variation-settings:'FILL' 1">workspace_premium</span>
+      <div class="relative mb-4">
+        <div class="w-28 h-28 rounded-full border-4 border-primary bg-surface-container-highest flex items-center justify-center medal-glow-gold">
+          <span class="text-3xl font-bold font-headline text-primary" id="pod1init">—</span>
+        </div>
+        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-br from-primary to-primary-dim text-on-primary px-3 py-0.5 rounded-full font-bold text-xs uppercase tracking-wider">No.1</div>
+      </div>
+      <p class="text-base font-bold font-headline text-center" id="pod1name">—</p>
+      <p class="text-primary text-sm font-bold" id="pod1score">—</p>
+    </div>
+    <!-- Bronze -->
+    <div class="flex flex-col items-center" id="podium3">
+      <div class="relative mb-4">
+        <div class="w-20 h-20 rounded-full border-4 border-amber-700/30 bg-surface-container-highest flex items-center justify-center medal-glow-bronze">
+          <span class="text-2xl font-bold font-headline text-amber-700" id="pod3init">—</span>
+        </div>
+        <div class="absolute -bottom-2 -right-2 bg-amber-700 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">3</div>
+      </div>
+      <p class="text-sm font-bold font-headline text-center" id="pod3name">—</p>
+      <p class="text-amber-600 text-xs font-semibold" id="pod3score">—</p>
+    </div>
+  </div>
+
+  <!-- Full list -->
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-[10px] uppercase tracking-[0.3em] text-on-surface-variant font-label border-b border-outline-variant/10 pb-2">Bảng xếp hạng đầy đủ</h2>
+    <button onclick="loadLeaderboard()" class="text-xs text-primary hover:underline font-label flex items-center gap-1">
+      <span class="material-symbols-outlined text-sm">refresh</span> Làm mới
+    </button>
+  </div>
+  <div class="flex flex-col gap-3" id="lbList">
+    <div class="flex justify-center py-12"><div class="spinner"></div></div>
+  </div>
+
+  <div class="mt-10">
+    <a href="/" class="flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-br from-primary to-primary-dim text-on-primary font-headline font-bold shadow-[0_10px_20px_-5px_rgba(132,85,239,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(132,85,239,0.5)] transition-all active:scale-95">
+      <span class="material-symbols-outlined">play_arrow</span> Chơi ngay
+    </a>
+  </div>
+</main>
+
+<script>
+  function showToast(msg,type='info',dur=3000){
+    const c=document.getElementById('toastContainer');
+    const icons={success:'✅',error:'❌',info:'ℹ️'};
+    const t=document.createElement('div');t.className=`toast ${type}`;
+    t.innerHTML=`<span>${icons[type]}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(()=>{t.style.animation='toastIn .3s ease reverse';setTimeout(()=>t.remove(),300);},dur);
+  }
+  function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('show',v);}
+
+  const currentUser=localStorage.getItem('quizUserName');
+  function timeAgo(d){
+    const diff=Math.floor((new Date()-new Date(d))/1000);
+    if(diff<60)return'Vừa xong';if(diff<3600)return Math.floor(diff/60)+'p trước';
+    if(diff<86400)return Math.floor(diff/3600)+'h trước';return Math.floor(diff/86400)+'d trước';
+  }
+
+  async function loadLeaderboard(){
+    showLoading(true);
+    try{
+      const res=await fetch('/leaderboard');
+      const data=await res.json();
+      const list=document.getElementById('lbList');
+      if(!data.length){list.innerHTML='<div class="text-center py-16 text-on-surface-variant">Chưa có dữ liệu. Hãy là người đầu tiên!</div>';return;}
+
+      // Podium
+      if(data.length>=1){
+        document.getElementById('podiumSection').classList.remove('hidden');
+        document.getElementById('podiumSection').classList.add('grid');
+        const p1=data[0];
+        document.getElementById('pod1init').textContent=p1.name[0].toUpperCase();
+        document.getElementById('pod1name').textContent=p1.name;
+        document.getElementById('pod1score').textContent=`${p1.score}/${p1.total||20}`;
+        if(data[1]){const p2=data[1];document.getElementById('pod2name').textContent=p2.name[0].toUpperCase();document.getElementById('pod2name2').textContent=p2.name;document.getElementById('pod2score').textContent=`${p2.score}/${p2.total||20}`;}
+        if(data[2]){const p3=data[2];document.getElementById('pod3init').textContent=p3.name[0].toUpperCase();document.getElementById('pod3name').textContent=p3.name;document.getElementById('pod3score').textContent=`${p3.score}/${p3.total||20}`;}
+      }
+
+      const medals=['🥇','🥈','🥉'];
+      list.innerHTML=data.map((e,i)=>{
+        const pct=e.total?Math.round(e.score/e.total*100):0;
+        const isMe=e.name===currentUser;
+        return `<div class="lb-row rank-${i+1} ${isMe?'is-me':''}" style="animation-delay:${i*0.05}s">
+          <div class="w-10 text-center font-headline font-bold text-lg ${i<3?'':'text-on-surface-variant'}">${i<3?medals[i]:i+1}</div>
+          <div class="flex-1">
+            <span class="font-bold text-sm">${e.name}</span>
+            ${isMe?'<span class="ml-2 text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-bold">Bạn</span>':''}
+          </div>
+          <div class="text-xs text-on-surface-variant">${timeAgo(e.createdAt)}</div>
+          <div class="text-right">
+            <div class="font-headline font-bold text-primary">${e.score}/${e.total||20}</div>
+            <div class="text-xs text-on-surface-variant">${pct}%</div>
+          </div>
+        </div>`;
+      }).join('');
+    }catch(e){showToast('Lỗi tải leaderboard','error');}
+    finally{showLoading(false);}
+  }
+  loadLeaderboard();
+</script>
+</body>
+</html>
