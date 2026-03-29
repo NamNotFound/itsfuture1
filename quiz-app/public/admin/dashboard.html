@@ -429,13 +429,14 @@
     try {
       const qs = await api('/admin/questions');
       if (!qs.length) { el.innerHTML = '<p style="text-align:center;padding:3rem;color:var(--text-muted)">Chưa có câu hỏi nào</p>'; return; }
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       el.innerHTML = qs.map((q, i) => `
         <div class="q-item" id="qi-${q._id}" style="animation-delay:${i*0.04}s">
           <div class="q-num">#${i+1}</div>
           <div class="q-content">
-            <div class="q-text">${q.question}</div>
+            <div class="q-text">${esc(q.question)}</div>
             <div class="q-opts">
-              ${q.options.map((o,j) => `<span class="q-opt ${j===q.correct?'correct':''}">${LABELS[j]}: ${o}</span>`).join('')}
+              ${q.options.map((o,j) => `<span class="q-opt ${j===q.correct?'correct':''}">${LABELS[j]}: ${esc(o)}</span>`).join('')}
             </div>
           </div>
           <button class="q-delete" onclick="deleteQuestion('${q._id}')">🗑 Xóa</button>
