@@ -141,7 +141,7 @@
   async function loadLeaderboard(){
     showLoading(true);
     try{
-      const res=await fetch('/leaderboard');
+      const res=await fetch('/api/leaderboard');
       const data=await res.json();
       const list=document.getElementById('lbList');
       if(!data.length){list.innerHTML='<div class="text-center py-16 text-on-surface-variant">Chưa có dữ liệu. Hãy là người đầu tiên!</div>';return;}
