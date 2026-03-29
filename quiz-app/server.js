@@ -16,18 +16,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
-app.use('/admin', authRoutes);
-app.use('/', questionRoutes);
-app.use('/', scoreRoutes);
-
-// Serve HTML pages
+// Serve HTML pages FIRST (before API routes to avoid conflicts)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/quiz', (req, res) => res.sendFile(path.join(__dirname, 'public', 'quiz.html')));
 app.get('/result', (req, res) => res.sendFile(path.join(__dirname, 'public', 'result.html')));
 app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'leaderboard.html')));
 app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
 app.get('/admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html')));
+
+// API Routes AFTER HTML pages
+app.use('/admin', authRoutes);
+app.use('/', questionRoutes);
+app.use('/', scoreRoutes);
 
 // Connect MongoDB
 mongoose.connect(process.env.MONGODB_URI)
