@@ -9,7 +9,6 @@ router.post('/submit-score', async (req, res) => {
     const { name, score, total } = req.body;
     if (!name || score === undefined || !total)
       return res.status(400).json({ error: 'Missing fields' });
-
     const saved = await Score.create({ name: name.trim(), score, total });
     res.status(201).json(saved);
   } catch {
@@ -17,8 +16,8 @@ router.post('/submit-score', async (req, res) => {
   }
 });
 
-// GET /leaderboard — top 10
-router.get('/leaderboard', async (req, res) => {
+// GET /api/leaderboard — đổi sang /api/ để tránh conflict với HTML route /leaderboard
+router.get('/api/leaderboard', async (req, res) => {
   try {
     const top = await Score.find()
       .sort({ score: -1, createdAt: 1 })
