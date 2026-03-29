@@ -409,7 +409,7 @@
       document.getElementById('statUsers').textContent = stats.totalUsers;
       document.getElementById('statAvg').textContent = stats.averageScore.toFixed(1);
 
-      const scores = await api('/leaderboard');
+      const scores = await api('/api/leaderboard');
       const el = document.getElementById('recentScores');
       if (!scores.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.875rem;padding:1rem 0">Chưa có dữ liệu</p>'; return; }
       const medals = ['🥇','🥈','🥉'];
