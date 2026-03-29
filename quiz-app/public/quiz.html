@@ -109,7 +109,7 @@
 <div class="fixed bottom-0 -right-64 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
 
 <script>
-  let questions=[],current=0,answers={},correctCount=0,answered=0,timerInterval,timeLeft=300;
+  let questions=[],current=0,answers={},answerResults={},correctCount=0,answered=0,timerInterval,timeLeft=300;
   const LABELS=['A','B','C','D'];
 
   function showToast(msg,type='info',dur=3000){
@@ -182,6 +182,7 @@
   async function selectAnswer(idx){
     const q=questions[current];
     if(document.querySelector('.option-btn.correct,.option-btn.wrong'))return;
+    if(answers[q._id]!==undefined)return; // chặn click trùng
     answers[q._id]=idx;
     const opts=document.querySelectorAll('.option-btn');
     opts.forEach(o=>o.classList.add('disabled'));
@@ -190,11 +191,12 @@
       const res=await fetch('/check-answers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:{[q._id]:idx}})});
       const data=await res.json();
       const result=data.results[0];
+      answerResults[q._id]=result.isCorrect; // lưu kết quả
       if(result.isCorrect){
         opts[idx].classList.add('correct');
         opts[idx].querySelector('.result-icon').textContent='✓';
         opts[idx].querySelector('.result-icon').style.opacity='1';
-        correctCount++;showToast('Chính xác! 🎉','success',1500);
+        showToast('Chính xác! 🎉','success',1500);
       }else{
         opts[idx].classList.add('wrong');
         opts[idx].querySelector('.result-icon').textContent='✗';
@@ -205,10 +207,12 @@
         showToast('Sai! Đáp án đúng là '+LABELS[result.correct],'error',2000);
       }
       answered++;
+      // Tính điểm từ map, không cộng dồn => không bao giờ vượt tổng
+      correctCount=Object.values(answerResults).filter(v=>v).length;
       document.getElementById('answeredCount').textContent=answered;
       document.getElementById('scoreText').textContent='Đúng: '+correctCount;
       document.getElementById('nextBtn').disabled=false;
-    }catch(e){}
+    }catch(e){ document.getElementById('nextBtn').disabled=false; }
   }
 
   function nextQuestion(){
