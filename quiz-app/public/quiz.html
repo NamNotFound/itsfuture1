@@ -168,7 +168,8 @@
     q.options.forEach((opt,i)=>{
       const btn=document.createElement('button');
       btn.className='option-btn';
-      btn.innerHTML=`<div class="badge">${LABELS[i]}</div><span class="font-body text-base text-on-surface-variant flex-1">${opt}</span><span class="result-icon text-lg opacity-0 transition-opacity"></span>`;
+      const escOpt = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      btn.innerHTML=`<div class="badge">${LABELS[i]}</div><span class="font-body text-base text-on-surface-variant flex-1">${escOpt(opt)}</span><span class="result-icon text-lg opacity-0 transition-opacity"></span>`;
       btn.addEventListener('click',()=>selectAnswer(i));
       container.appendChild(btn);
     });
