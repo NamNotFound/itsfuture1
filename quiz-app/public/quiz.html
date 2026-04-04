@@ -66,7 +66,7 @@
   <section class="flex flex-col md:flex-row justify-between items-end gap-5 border-b border-outline-variant/10 pb-7">
     <div class="w-full md:w-1/2">
       <div class="flex justify-between mb-3 items-baseline">
-        <span class="font-headline font-extrabold text-3xl md:text-4xl tracking-tighter uppercase" id="questionNum">Câu 01<span class="text-on-surface-variant/40">/20</span></span>
+        <span class="font-headline font-extrabold text-3xl md:text-4xl tracking-tighter uppercase" id="questionNum">Câu 01<span class="text-on-surface-variant/40">/--</span></span>
         <span class="text-secondary font-label text-xs tracking-widest uppercase font-bold" id="scoreText">Đúng: 0</span>
       </div>
       <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
@@ -109,6 +109,7 @@
 <div class="fixed bottom-0 -right-64 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
 
 <script>
+  const QUESTION_LIMIT = 10;
   let questions=[],current=0,answers={},answerResults={},correctCount=0,answered=0,timerInterval,timeLeft=300;
   const LABELS=['A','B','C','D'];
 
@@ -123,15 +124,34 @@
   function showLoading(v){document.getElementById('loadingOverlay').classList.toggle('show',v);}
 
   function getCategory(idx){
-    if(idx<6)return{label:'HTML',cls:'bg-orange-500/10 border-orange-500/20 text-orange-400'};
-    if(idx<12)return{label:'CSS',cls:'bg-blue-500/10 border-blue-500/20 text-blue-400'};
-    return{label:'JavaScript',cls:'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'};
+    const total = Math.max(1, questions.length || 1);
+    const third = total / 3;
+    if (idx < third) return {label:'HTML',cls:'bg-orange-500/10 border-orange-500/20 text-orange-400'};
+    if (idx < third * 2) return {label:'CSS',cls:'bg-blue-500/10 border-blue-500/20 text-blue-400'};
+    return {label:'JavaScript',cls:'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'};
+  }
+
+  function clampInt(value, min, max, fallback){
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    const i = Math.trunc(n);
+    return Math.max(min, Math.min(max, i));
+  }
+
+  function updateTimerUI(){
+    const el=document.getElementById('timer');
+    const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
+    const s=String(timeLeft%60).padStart(2,'0');
+    el.textContent=`${m}:${s}`;
+    if(timeLeft<=60)el.style.color='#ff6e84';
+    else if(timeLeft<=120)el.style.color='#ffcc00';
+    else el.style.color='';
   }
 
   async function loadQuestions(){
     showLoading(true);
     try{
-      const res=await fetch('/questions');
+      const res=await fetch(`/questions?limit=${QUESTION_LIMIT}&random=1`);
       questions=await res.json();
       if(!questions.length){showToast('Không có câu hỏi!','error');return;}
       renderQuestion();startTimer();
@@ -140,14 +160,10 @@
   }
 
   function startTimer(){
-    const el=document.getElementById('timer');
+    updateTimerUI();
     timerInterval=setInterval(()=>{
       timeLeft--;
-      const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
-      const s=String(timeLeft%60).padStart(2,'0');
-      el.textContent=`${m}:${s}`;
-      if(timeLeft<=60)el.style.color='#ff6e84';
-      else if(timeLeft<=120)el.style.color='#ffcc00';
+      updateTimerUI();
       if(timeLeft<=0){clearInterval(timerInterval);showToast('⏰ Hết giờ!','error');setTimeout(finishQuiz,800);}
     },1000);
   }
@@ -232,6 +248,8 @@
   }
 
   const name=localStorage.getItem('quizUserName');
+  timeLeft = clampInt(localStorage.getItem('quizTimeSeconds'), 30, 60 * 120, 300);
+  updateTimerUI();
   if(!name)window.location.href='/';
   else loadQuestions();
 </script>

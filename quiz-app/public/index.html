@@ -61,16 +61,16 @@
         </h1>
       </div>
       <p class="text-on-surface-variant text-base md:text-lg max-w-xl leading-relaxed">
-        20 câu hỏi về HTML, CSS và JavaScript — kiểm tra nền tảng lập trình web của bạn. Chỉ những ai kiên trì mới lên được đỉnh bảng xếp hạng.
+        10 câu hỏi được chọn ngẫu nhiên từ bộ câu hỏi HTML, CSS và JavaScript — kiểm tra nền tảng lập trình web của bạn. Bạn có thể tự chọn thời gian làm bài.
       </p>
       <div class="flex items-center gap-6 md:gap-8 pt-2">
         <div class="flex flex-col">
-          <span class="text-2xl font-bold font-headline">20</span>
+          <span class="text-2xl font-bold font-headline">10</span>
           <span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Câu hỏi</span>
         </div>
         <div class="w-px h-10 bg-outline-variant/30"></div>
         <div class="flex flex-col">
-          <span class="text-2xl font-bold font-headline">05:00</span>
+          <span class="text-2xl font-bold font-headline tabular-nums" id="timeStat">05:00</span>
           <span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Phút</span>
         </div>
         <div class="w-px h-10 bg-outline-variant/30"></div>
@@ -87,6 +87,11 @@
           <div class="space-y-2">
             <label class="text-[10px] uppercase tracking-[0.1em] text-on-surface-variant font-label" for="nameInput">Tên của bạn</label>
             <input class="w-full bg-surface-container-lowest border-none rounded-xl px-5 py-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/50 transition-all font-body text-base md:text-lg outline-none" id="nameInput" placeholder="Nhập tên để bắt đầu..." type="text" maxlength="30" autocomplete="off"/>
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] uppercase tracking-[0.1em] text-on-surface-variant font-label" for="timeInput">Thời gian (phút)</label>
+            <input class="w-full bg-surface-container-lowest border-none rounded-xl px-5 py-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/50 transition-all font-body text-base md:text-lg outline-none" id="timeInput" placeholder="Ví dụ: 5" type="number" min="1" max="120" step="1" inputmode="numeric"/>
+            <p class="text-[11px] text-on-surface-variant">Bạn có thể đổi thời gian trước khi bắt đầu.</p>
           </div>
           <button onclick="startQuiz()" class="w-full py-4 md:py-5 rounded-xl bg-gradient-to-br from-primary to-primary-dim text-on-primary font-headline font-extrabold text-base md:text-lg tracking-tight hover:shadow-[0_0_30px_rgba(186,158,255,0.4)] transition-all duration-300 active:scale-[0.98]">
             BẮT ĐẦU QUIZ →
@@ -116,7 +121,7 @@
         </div>
       </div>
       <div class="glass-card rounded-2xl p-7 flex flex-col justify-center items-center text-center">
-        <span class="text-4xl font-headline font-extrabold text-secondary mb-2">20</span>
+        <span class="text-4xl font-headline font-extrabold text-secondary mb-2">10</span>
         <span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Câu hỏi</span>
       </div>
       <div class="glass-card rounded-2xl p-7 flex flex-col justify-center items-center text-center">
@@ -144,14 +149,30 @@
     setTimeout(()=>{t.style.animation='toastIn .3s ease reverse';setTimeout(()=>t.remove(),300);},dur);
   }
   const input=document.getElementById('nameInput');
+  const timeInput=document.getElementById('timeInput');
+  const timeStat=document.getElementById('timeStat');
   const saved=localStorage.getItem('quizUserName');
   if(saved) input.value=saved;
+  const savedTimeSeconds=parseInt(localStorage.getItem('quizTimeSeconds')||'300',10);
+  const savedMinutes=Number.isFinite(savedTimeSeconds) ? Math.max(1,Math.min(120,Math.round(savedTimeSeconds/60))) : 5;
+  timeInput.value=String(savedMinutes);
+
+  function updateTimeStat(){
+    const m=parseInt(timeInput.value||'5',10);
+    const safeM=Number.isFinite(m) ? Math.max(1,Math.min(120,m)) : 5;
+    timeStat.textContent=String(safeM).padStart(2,'0')+':00';
+  }
+  timeInput.addEventListener('input',updateTimeStat);
+  updateTimeStat();
   input.addEventListener('keydown',e=>{if(e.key==='Enter')startQuiz();});
   function startQuiz(){
     const name=input.value.trim();
     if(!name){showToast('Vui lòng nhập tên!','error');input.focus();return;}
     if(name.length<2){showToast('Tên phải có ít nhất 2 ký tự!','error');return;}
+    const minutes=parseInt(timeInput.value||'5',10);
+    if(!Number.isFinite(minutes)||minutes<1||minutes>120){showToast('Thời gian phải từ 1 đến 120 phút!','error');timeInput.focus();return;}
     localStorage.setItem('quizUserName',name);
+    localStorage.setItem('quizTimeSeconds',String(minutes*60));
     showToast('Chào '+name+'! Đang tải...','success');
     setTimeout(()=>window.location.href='/quiz',800);
   }

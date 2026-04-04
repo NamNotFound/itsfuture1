@@ -131,8 +131,8 @@ Password: admin123
 
 **User:**
 - ✅ Nhập tên, lưu localStorage
-- ✅ 20 câu hỏi HTML/CSS/JS từ MongoDB
-- ✅ Timer đếm ngược 5 phút
+- ✅ 10 câu hỏi ngẫu nhiên từ MongoDB
+- ✅ Timer đếm ngược (user tự chọn, mặc định 5 phút)
 - ✅ Highlight đúng/sai sau mỗi câu
 - ✅ Tính điểm server-side (không gian lận)
 - ✅ Bảng xếp hạng top 10

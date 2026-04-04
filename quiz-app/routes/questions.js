@@ -6,8 +6,25 @@ const router = express.Router();
 // GET /questions — for users (no correct answer exposed)
 router.get('/questions', async (req, res) => {
   try {
-    const questions = await Question.find({}, { correct: 0, __v: 0 }).lean();
-    res.json(questions);
+    const limitRaw = req.query.limit;
+    const random = String(req.query.random || '').toLowerCase();
+    const isRandom = random === '1' || random === 'true' || random === 'yes';
+
+    const limit = Number.isFinite(Number(limitRaw)) ? Number(limitRaw) : undefined;
+    const safeLimit = limit === undefined ? undefined : Math.max(1, Math.min(200, Math.trunc(limit)));
+
+    if (isRandom && safeLimit) {
+      const questions = await Question.aggregate([
+        { $sample: { size: safeLimit } },
+        { $project: { correct: 0, __v: 0 } },
+      ]);
+      return res.json(questions);
+    }
+
+    let query = Question.find({}, { correct: 0, __v: 0 }).lean();
+    if (safeLimit) query = query.limit(safeLimit);
+    const questions = await query;
+    return res.json(questions);
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
